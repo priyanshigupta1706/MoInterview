@@ -2,7 +2,6 @@
 
 import { mockInterviewers } from '@/lib/mock-data'
 import { type InterviewerFilterOptions, type SortOption } from '@/lib/types'
-import { Slider } from '@/components/ui/slider'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
 import {
@@ -12,13 +11,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Button } from '@/components/ui/button'
 
 interface InterviewerFiltersProps {
   filters: InterviewerFilterOptions
   onFiltersChange: (filters: InterviewerFilterOptions) => void
   sortBy: SortOption
   onSortChange: (sort: SortOption) => void
+  filteredCount?: number
 }
 
 export default function InterviewerFilters({
@@ -26,8 +25,18 @@ export default function InterviewerFilters({
   onFiltersChange,
   sortBy,
   onSortChange,
+  filteredCount = 0,
 }: InterviewerFiltersProps) {
   const companies = Array.from(new Set(mockInterviewers.map((i) => i.company)))
+  const skills = Array.from(new Set(mockInterviewers.flatMap((i) => i.skills)))
+
+  const getCompanyCount = (company: string) => {
+    return mockInterviewers.filter((i) => i.company === company).length
+  }
+
+  const getSkillCount = (skill: string) => {
+    return mockInterviewers.filter((i) => i.skills.includes(skill)).length
+  }
 
   const handleCompanyChange = (company: string, checked: boolean) => {
     const companies = checked
@@ -36,8 +45,11 @@ export default function InterviewerFilters({
     onFiltersChange({ ...filters, companies: companies.length > 0 ? companies : undefined })
   }
 
-  const handleExperienceChange = (range: [number, number]) => {
-    onFiltersChange({ ...filters, experienceRange: range })
+  const handleSkillChange = (skill: string, checked: boolean) => {
+    const skillsList = checked
+      ? [...(filters.skills || []), skill]
+      : (filters.skills || []).filter((s) => s !== skill)
+    onFiltersChange({ ...filters, skills: skillsList.length > 0 ? skillsList : undefined })
   }
 
   const handlePriceChange = (range: [number, number]) => {
@@ -53,27 +65,26 @@ export default function InterviewerFilters({
     onSortChange('rating')
   }
 
+  const hasActiveFilters = filters.companies?.length || filters.skills?.length || filters.minRating || filters.priceRange
+
   return (
-    <div className="sticky top-20 space-y-6">
-      {/* Sort */}
-      <div>
-        <Label className="text-sm font-semibold mb-3 block">Sort by</Label>
-        <Select value={sortBy} onValueChange={(value) => onSortChange(value as SortOption)}>
-          <SelectTrigger className="w-full">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="rating">Highest Rating</SelectItem>
-            <SelectItem value="price">Lowest Price</SelectItem>
-            <SelectItem value="experience">Most Experience</SelectItem>
-            <SelectItem value="availability">Next Available</SelectItem>
-          </SelectContent>
-        </Select>
+    <div className="space-y-8">
+      {/* Filters header and reset */}
+      <div className="flex items-center justify-between">
+        <p className="text-xs uppercase tracking-widest text-muted-foreground font-light">Filters</p>
+        {hasActiveFilters && (
+          <button
+            onClick={handleReset}
+            className="text-xs uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors font-light"
+          >
+            RESET ALL
+          </button>
+        )}
       </div>
 
       {/* Companies */}
       <div>
-        <Label className="text-sm font-semibold mb-3 block">Companies</Label>
+        <p className="text-xs uppercase tracking-widest text-muted-foreground font-light mb-3">COMPANY</p>
         <div className="space-y-2">
           {companies.map((company) => (
             <div key={company} className="flex items-center space-x-2">
@@ -81,72 +92,85 @@ export default function InterviewerFilters({
                 id={`company-${company}`}
                 checked={filters.companies?.includes(company) || false}
                 onCheckedChange={(checked) => handleCompanyChange(company, checked as boolean)}
+                className="w-4 h-4"
               />
-              <Label htmlFor={`company-${company}`} className="font-normal cursor-pointer">
+              <Label
+                htmlFor={`company-${company}`}
+                className="font-light text-sm cursor-pointer flex items-center justify-between flex-1"
+              >
                 {company}
+                <span className="text-xs text-muted-foreground ml-2">{getCompanyCount(company)}</span>
               </Label>
             </div>
           ))}
+        </div>
+      </div>
+
+      {/* Focus Area / Skills */}
+      <div>
+        <p className="text-xs uppercase tracking-widest text-muted-foreground font-light mb-3">FOCUS AREA</p>
+        <div className="space-y-2">
+          {skills.slice(0, 6).map((skill) => (
+            <div key={skill} className="flex items-center space-x-2">
+              <Checkbox
+                id={`skill-${skill}`}
+                checked={filters.skills?.includes(skill) || false}
+                onCheckedChange={(checked) => handleSkillChange(skill, checked as boolean)}
+                className="w-4 h-4"
+              />
+              <Label
+                htmlFor={`skill-${skill}`}
+                className="font-light text-sm cursor-pointer flex items-center justify-between flex-1"
+              >
+                {skill}
+                <span className="text-xs text-muted-foreground ml-2">{getSkillCount(skill)}</span>
+              </Label>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Price Range */}
+      <div>
+        <p className="text-xs uppercase tracking-widest text-muted-foreground font-light mb-3">PRICE PER HOUR</p>
+        <div className="space-y-2 text-sm">
+          <label className="flex items-center space-x-2 cursor-pointer">
+            <input type="radio" name="price" value="any" checked={!filters.priceRange} onChange={() => onFiltersChange({ ...filters, priceRange: undefined })} className="w-4 h-4" />
+            <span className="font-light">Up to $200</span>
+          </label>
         </div>
       </div>
 
       {/* Experience */}
       <div>
-        <Label className="text-sm font-semibold mb-3 block">
-          Experience: {filters.experienceRange?.[0] || 0} - {filters.experienceRange?.[1] || 15} years
-        </Label>
-        <Slider
-          min={0}
-          max={15}
-          step={1}
-          value={filters.experienceRange || [0, 15]}
-          onValueChange={(value) => handleExperienceChange(value as [number, number])}
-          className="w-full"
-        />
-      </div>
-
-      {/* Price Range */}
-      <div>
-        <Label className="text-sm font-semibold mb-3 block">
-          Price: ${filters.priceRange?.[0] || 50} - ${filters.priceRange?.[1] || 200}/hour
-        </Label>
-        <Slider
-          min={50}
-          max={200}
-          step={10}
-          value={filters.priceRange || [50, 200]}
-          onValueChange={(value) => handlePriceChange(value as [number, number])}
-          className="w-full"
-        />
+        <p className="text-xs uppercase tracking-widest text-muted-foreground font-light mb-3">MIN. EXPERIENCE</p>
+        <div className="space-y-2 text-sm">
+          <label className="flex items-center space-x-2 cursor-pointer">
+            <input type="radio" name="experience" value="any" checked={!filters.experienceRange} onChange={() => onFiltersChange({ ...filters, experienceRange: undefined })} className="w-4 h-4" />
+            <span className="font-light">0+ years</span>
+          </label>
+        </div>
       </div>
 
       {/* Rating */}
       <div>
-        <Label className="text-sm font-semibold mb-3 block">Minimum Rating</Label>
+        <p className="text-xs uppercase tracking-widest text-muted-foreground font-light mb-3">MIN. RATING</p>
         <div className="space-y-2">
-          {[0, 4.0, 4.5, 4.7].map((rating) => (
+          {[0, 4.7, 4.8, 4.9].map((rating) => (
             <div key={rating} className="flex items-center space-x-2">
               <Checkbox
                 id={`rating-${rating}`}
                 checked={filters.minRating === rating}
                 onCheckedChange={(checked) => handleRatingChange(checked ? rating : 0)}
+                className="w-4 h-4"
               />
-              <Label htmlFor={`rating-${rating}`} className="font-normal cursor-pointer">
-                {rating === 0 ? 'Any' : `${rating}+ stars`}
+              <Label htmlFor={`rating-${rating}`} className="font-light text-sm cursor-pointer">
+                {rating === 0 ? 'Any rating' : `${rating}+ stars`}
               </Label>
             </div>
           ))}
         </div>
       </div>
-
-      {/* Reset */}
-      <Button
-        variant="outline"
-        className="w-full bg-transparent"
-        onClick={handleReset}
-      >
-        Reset Filters
-      </Button>
     </div>
   )
 }

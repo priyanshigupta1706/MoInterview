@@ -1,52 +1,107 @@
 'use client'
 
 import { useState } from 'react'
-import { Search } from 'lucide-react'
+import { X } from 'lucide-react'
 
-export default function FindCoachesHeader() {
+interface FindCoachesHeaderProps {
+  onSearchChange?: (query: string) => void
+  onTagsChange?: (tags: string[]) => void
+  selectedTags?: string[]
+}
+
+export default function FindCoachesHeader({
+  onSearchChange,
+  onTagsChange,
+  selectedTags = [],
+}: FindCoachesHeaderProps) {
   const [searchQuery, setSearchQuery] = useState('')
+  const [localTags, setLocalTags] = useState<string[]>(selectedTags)
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault()
-    // Search functionality will be added to the grid component via context/props
-    console.log('[v0] Search query:', searchQuery)
+  const handleSearchChange = (value: string) => {
+    setSearchQuery(value)
+    onSearchChange?.(value)
+  }
+
+  const handleRemoveTag = (tagToRemove: string) => {
+    const newTags = localTags.filter(tag => tag !== tagToRemove)
+    setLocalTags(newTags)
+    onTagsChange?.(newTags)
+  }
+
+  const handleAddTag = () => {
+    if (searchQuery.trim() && !localTags.includes(searchQuery.trim())) {
+      const newTags = [...localTags, searchQuery.trim()]
+      setLocalTags(newTags)
+      setSearchQuery('')
+      onTagsChange?.(newTags)
+    }
   }
 
   return (
-    <div className="bg-background py-24 px-4 sm:px-8 lg:px-12">
-      <div className="max-w-2xl mx-auto space-y-12 text-center">
-        {/* Title */}
-        <h1 className="text-5xl sm:text-6xl font-light text-foreground tracking-tight">
-          Find Your Coach
-        </h1>
+    <div className="bg-background border-b border-border">
+      {/* Header Section */}
+      <div className="px-4 sm:px-8 lg:px-12 py-12">
+        <div className="max-w-6xl mx-auto">
+          {/* Badge and Title */}
+          <div className="mb-8 space-y-3">
+            <p className="text-xs uppercase tracking-widest text-muted-foreground font-light">
+              COACHES 1,200+ VETTED EXPERTS
+            </p>
+            <h1 className="text-4xl sm:text-5xl font-light text-foreground">
+              Find your coach
+            </h1>
+          </div>
 
-        {/* Search Bar */}
-        <form onSubmit={handleSearch} className="w-full">
-          <div className="relative flex items-center bg-card border-2 border-border rounded-sm overflow-hidden hover:border-foreground/30 transition-smooth">
-            {/* Search Input */}
-            <input
-              type="text"
-              placeholder="Search coaches by name, company, or skills..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="flex-1 px-6 py-4 bg-transparent text-foreground placeholder-muted-foreground focus:outline-none text-base"
-            />
+          {/* Description */}
+          <p className="text-base text-muted-foreground font-light mb-8 max-w-3xl">
+            Practice with engineers, PMs and leaders from the companies you're targeting - and get the unfiltered feedback that gets you hired.
+          </p>
 
-            {/* Search Icon Button */}
+          {/* Search Bar */}
+          <div className="flex items-center gap-3 mb-6">
+            <div className="flex-1 relative flex items-center bg-card border border-border overflow-hidden hover:border-foreground/30 transition-smooth">
+              <input
+                type="text"
+                placeholder="Search by name, company, role or skill..."
+                value={searchQuery}
+                onChange={(e) => handleSearchChange(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    handleAddTag()
+                  }
+                }}
+                className="flex-1 px-4 py-3 bg-transparent text-foreground placeholder-muted-foreground focus:outline-none text-sm"
+              />
+            </div>
             <button
-              type="submit"
-              className="px-6 py-4 bg-foreground text-background hover:opacity-90 transition-smooth flex items-center justify-center"
-              aria-label="Search"
+              onClick={handleAddTag}
+              className="px-6 py-3 bg-foreground text-background hover:opacity-90 transition-smooth text-sm font-light uppercase tracking-widest"
             >
-              <Search className="w-5 h-5" />
+              TRY
             </button>
           </div>
-        </form>
 
-        {/* Subheading */}
-        <p className="text-muted-foreground font-light max-w-xl mx-auto">
-          Browse experienced professionals from top tech companies. Find the perfect coach to prepare for your interview.
-        </p>
+          {/* Selected Tags */}
+          {localTags.length > 0 && (
+            <div className="flex flex-wrap gap-2 items-center">
+              {localTags.map((tag) => (
+                <div
+                  key={tag}
+                  className="inline-flex items-center gap-2 px-3 py-1 bg-muted/50 border border-border rounded-sm text-sm text-foreground"
+                >
+                  {tag}
+                  <button
+                    onClick={() => handleRemoveTag(tag)}
+                    className="text-muted-foreground hover:text-foreground transition-colors"
+                    aria-label={`Remove ${tag}`}
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )

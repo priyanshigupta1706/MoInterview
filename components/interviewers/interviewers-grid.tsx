@@ -70,11 +70,20 @@ export default function InterviewersGrid() {
       <div className="lg:col-span-3">
         {filteredInterviewers.length > 0 ? (
           <>
-            <div className="mb-6 flex justify-between items-center">
-              <p className="text-sm text-muted-foreground">
-                Showing {filteredInterviewers.length} of {mockInterviewers.length} interviewers
+            {/* Header with count and sort */}
+            <div className="mb-8 pb-6 border-b border-border flex items-center justify-between flex-wrap gap-4">
+              <p className="text-sm text-muted-foreground font-light">
+                {filteredInterviewers.length} coaches available
               </p>
+              <button className="text-xs uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors font-light">
+                SEARCH
+              </button>
+              <div className="flex items-center gap-2">
+                <p className="text-xs uppercase tracking-widest text-muted-foreground font-light">SORT</p>
+                <p className="text-sm text-foreground font-light">Highest rated</p>
+              </div>
             </div>
+            {/* Cards Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {filteredInterviewers.map((interviewer) => (
                 <InterviewerCard key={interviewer.id} interviewer={interviewer} />
