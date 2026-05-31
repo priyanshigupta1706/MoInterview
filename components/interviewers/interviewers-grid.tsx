@@ -70,17 +70,17 @@ export default function InterviewersGrid() {
       <div className="lg:col-span-3">
         {filteredInterviewers.length > 0 ? (
           <>
-            {/* Header with count and sort */}
-            <div className="mb-8 pb-6 border-b border-border flex items-center justify-between flex-wrap gap-4">
-              <p className="text-sm text-muted-foreground font-light">
+            {/* Header with count, search, sort */}
+            <div className="mb-8 pb-5 border-b border-border flex items-center justify-between gap-4">
+              <p className="text-xs font-light text-muted-foreground">
                 {filteredInterviewers.length} coaches available
               </p>
-              <button className="text-xs uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors font-light">
-                SEARCH
+              <button className="text-xs uppercase tracking-wider font-light text-muted-foreground hover:text-foreground transition-colors">
+                Search
               </button>
               <div className="flex items-center gap-2">
-                <p className="text-xs uppercase tracking-widest text-muted-foreground font-light">SORT</p>
-                <p className="text-sm text-foreground font-light">Highest rated</p>
+                <p className="text-xs uppercase tracking-wider font-light text-muted-foreground">Sort</p>
+                <p className="text-xs font-light text-foreground">Highest rated</p>
               </div>
             </div>
             {/* Cards Grid */}
